@@ -33,23 +33,28 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 5. 安装 Wine 支持 cross-build
+      # 5. 安装 electron-builder
+      - name: Install electron-builder
+        run: npm install -g electron-builder
+
+      # 6. 安装 Wine 支持 cross-build
       - name: Install Wine
         run: sudo apt-get update && sudo apt-get install -y wine
 
-      # 6. 构建 Windows 可执行程序
+      # 7. 构建 Windows 可执行程序
       - name: Build Windows executable
         run: npm run dist -- --win --x64 --publish never
 
-      # 7. 压缩构建产物
+      # 8. 压缩构建产物
       - name: Zip build output
         run: |
           mkdir -p build_artifacts
-          cp dist/*.exe build_artifacts/
+          # 自动将 dist 下所有 exe 拷贝到 build_artifacts
+          cp dist/*.exe build_artifacts/ || true
           cd build_artifacts
           zip -r Share-Windows.zip *
 
-      # 8. 上传构建产物
+      # 9. 上传构建产物
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
