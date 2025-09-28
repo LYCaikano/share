@@ -45,7 +45,7 @@ const index = "./client/index.html";
 /* 二维码 */
 const qrcodePage = "./client/qrcode.html";
 /* 默认路径, 实际路径 */
-const defaultPath = path.join(os.homedir(), "Documents", "files");
+const defaultPath = path.join(process.cwd(), "files");
 /* 默认类型，仅显示无线网 */
 let type = null;
 const defaultType = 1;
@@ -64,25 +64,35 @@ let icon = nativeImage.createFromPath(path.join(__dirname, "icon.png"));
 let qrContent='';
 
 function startApp() {
+    // 1. 定义一个基于 exe 文件位置的便携版默认路径
+    const portableDefaultPath = path.join(path.dirname(app.getPath("exe")), "files");
+
     let settingPath = null;
     let settingType = null;
     try {
+        // 2. 尝试获取用户之前设置过的路径
         settingPath = settings.get("path");
         settingType = settings.get("type");
     } catch (err) {
         console.log(err);
         // throw err;
     }
+    
     /* 目录 */
-    filesPath = settingPath || defaultPath;
+    // 3. 优先使用用户设置的路径，如果没有，则回退到我们的便携版默认路径
+    // highlight-next-line
+    filesPath = settingPath || portableDefaultPath; 
+
+    // 后续代码完全不用修改，它们会基于正确的 filesPath 工作
     downloadPath = path.join(filesPath, "download");
     uploadPath = path.join(filesPath, "upload");
     textPath = path.join(filesPath, "text");
     collectionPath = path.join(textPath, "collections.csv");
     [filesPath, downloadPath, uploadPath, textPath].forEach(mkdir);
-    /* 类型 */
+    
+    // 类型
     type = settingType || defaultType;
-
+    
     // 修复无法复制粘贴等问题
     let template = [
         {
