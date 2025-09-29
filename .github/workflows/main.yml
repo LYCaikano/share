@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '16'  # 适配 electron 3.x
+          node-version: '16'  # electron@3.x 需要 Node 16
 
       # 3. 缓存 node_modules
       - name: Cache node modules
@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # 4. 安装依赖
+      # 4. 安装依赖（不触发 postinstall）
       - name: Install dependencies
         run: npm install --ignore-scripts
 
@@ -37,29 +37,21 @@ jobs:
       - name: Install electron-builder
         run: npm install -g electron-builder
 
-      # 6. 安装 Wine 支持 cross-build
-      - name: Install Wine 32/64-bit for cross-build
+      # 6. 安装 Wine 以支持跨平台打包 Windows 程序
+      - name: Install Wine (32/64)
         run: |
-         sudo dpkg --add-architecture i386
-         sudo apt-get update
-         sudo apt-get install -y wine64 wine32
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wine64 wine32
 
-      # 7. 构建 Windows 可执行程序
-      - name: Build Windows executable
-        run: npm run dist -- --win --x64 --publish never
+      # 7. 执行 package.json 中定义的 dist 构建
+      #    例如 "dist": "electron-builder --win portable"
+      - name: Build app
+        run: npm run dist
 
-      # 8. 压缩构建产物
-      - name: Zip build output
-        run: |
-          mkdir -p build_artifacts
-          # 自动将 dist 下所有 exe 拷贝到 build_artifacts
-          cp dist/*.exe build_artifacts/ || true
-          cd build_artifacts
-          zip -r Share-Windows.zip *
-
-      # 9. 上传构建产物
-      - name: Upload artifact
+      # 8. 上传构建产物（整个 dist 文件夹）
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: share-windows
-          path: build_artifacts/Share-Windows.zip
+          name: Share-Windows
+          path: dist/
